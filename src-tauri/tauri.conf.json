@@ -35,9 +35,5 @@
       "icons/icon.icns"
     ]
   },
-  "plugins": {
-    "opener": {
-      "openTarget": "browser"
-    }
-  }
+  "plugins": {}
 }

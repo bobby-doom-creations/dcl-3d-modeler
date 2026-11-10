@@ -35,7 +35,7 @@ glam = "0.32"
 # File I/O
 lib3mf = "0.1"
 gltf = "1.1"
-wavefront_obj = "0.13"
+wavefront_obj = "11"
 image = "0.25"
 
 # Process management (for Python subprocesses)

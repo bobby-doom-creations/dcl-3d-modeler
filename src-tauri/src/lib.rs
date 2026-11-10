@@ -9,6 +9,7 @@ mod image_to_3d;
 mod util;
 
 use tauri::{Emitter, Manager};
+use tauri_plugin_dialog::DialogExt;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -52,10 +53,10 @@ async fn file_dialog_open(
   let chosen = app
     .dialog()
     .file()
-    .title(title)
+    .set_title(title)
     .add_filter("3D Models", &["3mf", "glb", "obj"])
-    .blocking_pick_file_file_path()
-    .map(|p| p.path().to_string_lossy().to_string())
+    .blocking_pick_file()
+    .and_then(|f| f.as_path().map(|p| p.to_string_lossy().to_string()))
     .ok_or("File dialog cancelled")?;
 
   Ok(chosen)
@@ -86,7 +87,7 @@ async fn mesh_boolean(
     mesh_b_faces: Vec<[u32; 3]>,
     operation: String,
 ) -> Result<String, String> {
-    let result_id = file_formats::boolean::apply(
+    let result_id = mesh_ops::boolean::apply(
         mesh_a_vertices,
         mesh_a_faces,
         mesh_b_vertices,
@@ -134,7 +135,7 @@ async fn mesh_decimate(
 #[command]
 async fn file_open(path: String) -> Result<serde_json::Value, String> {
     // Detect format from extension and delegate to appropriate module
-    file_formats::load(&path).await
+    file_formats::load(&path).await.map_err(|e| e.to_string())
 }
 
 #[command]
@@ -149,7 +150,7 @@ async fn export_3mf(
 
 #[command]
 async fn file_save(path: String) -> Result<(), String> {
-    file_formats::save(&path).await
+    file_formats::save(&path).await.map_err(|e| e.to_string())
 }
 
 #[command]
