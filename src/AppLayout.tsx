@@ -11,7 +11,6 @@ export default function AppLayout() {
   const [selectedTool, setSelectedTool] = useState<string>("select");
   const [sceneExpanded, setSceneExpanded] = useState(true);
 
-  /* Sync the store's tool with our local state */
   const storeTool = useMeshStore((s) => s.tool);
   const setStoreTool = useMeshStore((s) => s.setTool);
 
@@ -20,7 +19,6 @@ export default function AppLayout() {
     setStoreTool(tool as any);
   };
 
-  /* Keyboard shortcuts */
   useKeyboardShortcuts();
 
   return (
@@ -75,7 +73,6 @@ function useKeyboardShortcuts() {
         redo();
       } else if (ctrl && e.key === "s") {
         e.preventDefault();
-        /* Save action — would dispatch to global bus */
       } else if (e.key === "w" && !ctrl) {
         e.preventDefault();
         setWireframe(!useMeshStore.getState().wireframe);
@@ -97,16 +94,16 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     height: "100vh",
-    background: "var(--bg-primary)",
-    color: "var(--text-primary)",
+    background: "#0d0d1a",
+    color: "#e0e0ff",
   },
   header: {
     display: "flex",
     alignItems: "center",
     height: 40,
     padding: "0 12px",
-    background: "var(--bg-secondary)",
-    borderBottom: "1px solid var(--border-color)",
+    background: "#1a1a2e",
+    borderBottom: "1px solid #2a2a4a",
     gap: 12,
     flexShrink: 0,
   },
@@ -119,21 +116,21 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     width: 260,
-    background: "var(--bg-secondary)",
-    borderRight: "1px solid var(--border-color)",
+    background: "#1a1a2e",
+    borderRight: "1px solid #2a2a4a",
     overflowY: "auto",
     flexShrink: 0,
   },
   viewport: {
     flex: 1,
     position: "relative",
-    background: "var(--bg-primary)",
+    background: "#0d0d1a",
     overflow: "hidden",
   },
   properties: {
     width: 280,
-    background: "var(--bg-secondary)",
-    borderLeft: "1px solid var(--border-color)",
+    background: "#1a1a2e",
+    borderLeft: "1px solid #2a2a4a",
     overflowY: "auto",
     flexShrink: 0,
   },
