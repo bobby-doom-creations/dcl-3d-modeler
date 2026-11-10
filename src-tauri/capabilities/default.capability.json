@@ -1,0 +1,9 @@
+{
+  "id": "default",
+  "description": "Default capability for DCL 3D Modeler",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default"
+  ]
+}

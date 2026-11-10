@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCL 3D Modeler — Preview</title>
+<style>
+:root {
+  --bg-primary: #0d0d1a;
+  --bg-secondary: #1a1a2e;
+  --bg-tertiary: #16213e;
+  --bg-input: #0f0f20;
+  --text-primary: #e0e0ff;
+  --text-secondary: #8888aa;
+  --text-muted: #555577;
+  --accent-blue: #0088ff;
+  --accent-green: #00cc66;
+  --accent-gradient: linear-gradient(135deg, #0088ff 0%, #00cc66 100%);
+  --border-color: #2a2a4a;
+  --glow-blue: 0 0 8px rgba(0, 136, 255, 0.3);
+  --radius: 6px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; color: var(--text-primary); background: var(--bg-primary); }
+
+/* Layout */
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+/* Header */
+.header { display: flex; align-items: center; height: 40px; padding: 0 12px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); gap: 12px; flex-shrink: 0; }
+.header .logo svg { width: 28px; height: 28px; }
+.header .menu { display: flex; gap: 2px; margin-left: 16px; }
+.header .menu button { padding: 4px 10px; font-size: 12px; border-radius: 4px; color: var(--text-primary); cursor: pointer; background: none; border: none; }
+.header .menu button:hover { background: var(--bg-tertiary); }
+.header .version { margin-left: auto; font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+/* Main content */
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* Sidebar */
+.sidebar { width: 260px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column; }
+.sidebar-section { padding: 8px; border-bottom: 1px solid var(--border-color); }
+.sidebar-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; padding: 0 4px; }
+
+/* Scene tree */
+.scene-node { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.1s; }
+.scene-node:hover { background: var(--bg-tertiary); }
+.scene-node.selected { background: var(--bg-tertiary); border: 1px solid var(--accent-blue); }
+.scene-node .icon { font-size: 10px; color: var(--text-muted); width: 14px; text-align: center; }
+
+/* Tool panel */
+.tools { display: flex; flex-direction: column; gap: 4px; padding: 8px; }
+.tool-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; font-size: 18px; border-radius: 6px; cursor: pointer; color: var(--text-secondary); transition: all 0.15s; }
+.tool-btn:hover { background: var(--bg-tertiary); }
+.tool-btn.active { background: var(--bg-tertiary); color: var(--accent-blue); box-shadow: var(--glow-blue); border: 1px solid var(--accent-blue); }
+
+/* Viewport */
+.viewport { flex: 1; position: relative; background: var(--bg-primary); }
+.viewport-content { display: flex; align-items: center; justify-content: center; height: 100%; }
+.viewport-content .placeholder { text-align: center; }
+.viewport-content .placeholder h2 { font-size: 16px; font-weight: 600; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.viewport-content .placeholder p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.viewport-content .placeholder .hint { margin-top: 16px; font-size: 11px; color: var(--text-muted); padding: 6px 14px; background: var(--bg-tertiary); border-radius: 20px; border: 1px solid var(--border-color); display: inline-block; }
+.viewport-content .placeholder .status-badge { margin-top: 12px; font-size: 10px; color: var(--accent-green); padding: 3px 8px; background: rgba(0,204,102,0.1); border-radius: 4px; display: inline-block; }
+
+/* Properties */
+.properties { width: 280px; background: var(--bg-secondary); border-left: 1px solid var(--border-color); overflow-y: auto; padding: 12px; }
+.prop-section { padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+.prop-section:last-child { border-bottom: none; }
+.prop-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px; }
+.prop-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.prop-label { width: 60px; font-size: 11px; color: var(--text-secondary); flex-shrink: 0; }
+.prop-inputs { display: flex; gap: 4px; flex: 1; }
+.prop-input-group { display: flex; flex-direction: column; gap: 1px; flex: 1; }
+.prop-input-group label { font-size: 9px; color: var(--text-muted); font-weight: 600; }
+.prop-input-group input { width: 100%; height: 24px; font-size: 11px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 4px; padding: 0 6px; color: var(--text-primary); text-align: right; }
+.prop-input-group input:focus { border-color: var(--accent-blue); }
+.stat-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 11px; }
+.stat-label { color: var(--text-secondary); }
+.stat-value { color: var(--accent-green); font-family: monospace; }
+.action-btn { flex: 1; padding: 4px 8px; font-size: 11px; border-radius: 4px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; }
+.action-btn:hover { border-color: var(--accent-blue); }
+
+/* SVG Logo */
+.dcl-logo { display: flex; align-items: center; justify-content: center; }
+.dcl-logo svg { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="logo dcl-logo">
+      <svg viewBox="0 0 200 200">
+        <defs>
+          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0088ff"/>
+            <stop offset="100%" stop-color="#00cc66"/>
+          </linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="2" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <polygon points="100,10 180,55 180,145 100,190 20,145 20,55" fill="#1a1a2e" stroke="url(#grad)" stroke-width="4"/>
+        <g transform="translate(100,45)">
+          <polygon points="0,-12 15,0 0,12 -15,0" fill="none" stroke="url(#grad)" stroke-width="2"/>
+          <line x1="0" y1="-12" x2="0" y2="12" stroke="url(#grad)" stroke-width="1.5"/>
+          <line x1="-15" y1="0" x2="0" y2="0" stroke="url(#grad)" stroke-width="1.5"/>
+          <line x1="15" y1="0" x2="0" y2="0" stroke="url(#grad)" stroke-width="1.5"/>
+        </g>
+        <text x="100" y="115" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-size="48" font-weight="900" fill="url(#grad)" filter="url(#glow)" letter-spacing="2">DCL</text>
+        <text x="100" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#8888aa" letter-spacing="3">DOOM CREATIONS LAB</text>
+        <circle cx="25" cy="60" r="3" fill="#333355"/>
+        <circle cx="175" cy="60" r="3" fill="#333355"/>
+      </svg>
+    </div>
+    <div class="menu">
+      <button>File</button>
+      <button>Edit</button>
+      <button>View</button>
+      <button>Export</button>
+    </div>
+    <div class="version">DCL 3D Modeler v0.1.0</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Scene</div>
+        <div class="scene-node selected"><span class="icon">◆</span> Default Cube</div>
+        <div class="scene-node"><span class="icon">◎</span> Camera</div>
+        <div class="scene-node"><span class="icon">✦</span> Light</div>
+      </div>
+      <div class="sidebar-section" style="flex:1;">
+        <div class="sidebar-title">Tools</div>
+        <div class="tools">
+          <button class="tool-btn active" title="Select">◇</button>
+          <button class="tool-btn" title="Move">✥</button>
+          <button class="tool-btn" title="Scale">⤢</button>
+          <button class="tool-btn" title="Rotate">↻</button>
+          <button class="tool-btn" title="Extrude">▤</button>
+          <button class="tool-btn" title="Boolean">⊕</button>
+          <button class="tool-btn" title="Import">⬇</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Viewport -->
+    <div class="viewport">
+      <div class="viewport-content">
+        <div class="placeholder">
+          <h2>3D Viewport</h2>
+          <p>Three.js + React Three Fiber</p>
+          <div class="hint">Drag to orbit · Scroll to zoom · Click mesh to select</div>
+          <div class="status-badge">● Scaffolding Complete — Rust + Tauri Ready</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Properties -->
+    <div class="properties">
+      <div class="prop-section">
+        <div class="prop-title">Transform</div>
+        <div class="prop-row">
+          <span class="prop-label">Position</span>
+          <div class="prop-inputs">
+            <div class="prop-input-group"><label>X</label><input value="0.00"></div>
+            <div class="prop-input-group"><label>Y</label><input value="0.00"></div>
+            <div class="prop-input-group"><label>Z</label><input value="0.00"></div>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-label">Rotation</span>
+          <div class="prop-inputs">
+            <div class="prop-input-group"><label>X</label><input value="0.00"></div>
+            <div class="prop-input-group"><label>Y</label><input value="0.00"></div>
+            <div class="prop-input-group"><label>Z</label><input value="0.00"></div>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-label">Scale</span>
+          <div class="prop-inputs">
+            <div class="prop-input-group"><label>X</label><input value="1.00"></div>
+            <div class="prop-input-group"><label>Y</label><input value="1.00"></div>
+            <div class="prop-input-group"><label>Z</label><input value="1.00"></div>
+          </div>
+        </div>
+      </div>
+      <div class="prop-section">
+        <div class="prop-title">Mesh</div>
+        <div class="stat-row"><span class="stat-label">Vertices</span><span class="stat-value">—</span></div>
+        <div class="stat-row"><span class="stat-label">Faces</span><span class="stat-value">—</span></div>
+        <div class="stat-row"><span class="stat-label">Edges</span><span class="stat-value">—</span></div>
+      </div>
+      <div class="prop-section">
+        <div class="prop-title">Material</div>
+        <div class="prop-row">
+          <span class="prop-label">Color</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:20px;height:20px;border-radius:4px;background:#0088ff;border:1px solid var(--border-color);"></div>
+          </div>
+        </div>
+      </div>
+      <div class="prop-section">
+        <div class="prop-title">Actions</div>
+        <div style="display:flex;gap:6px;">
+          <button class="action-btn">Delete</button>
+          <button class="action-btn">Clone</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
