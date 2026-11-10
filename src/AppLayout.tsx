@@ -5,10 +5,23 @@ import Canvas3D from "./components/Canvas3D/Canvas3D";
 import PropertiesPanel from "./components/PropertiesPanel/PropertiesPanel";
 import SceneTree from "./components/SceneTree/SceneTree";
 import { DCLLogo } from "./components/Branding/DCLLogo";
+import { useMeshStore } from "./hooks/useMeshStore";
 
 export default function AppLayout() {
   const [selectedTool, setSelectedTool] = useState<string>("select");
   const [sceneExpanded, setSceneExpanded] = useState(true);
+
+  /* Sync the store's tool with our local state */
+  const storeTool = useMeshStore((s) => s.tool);
+  const setStoreTool = useMeshStore((s) => s.setTool);
+
+  const handleToolSelect = (tool: string) => {
+    setSelectedTool(tool);
+    setStoreTool(tool as any);
+  };
+
+  /* Keyboard shortcuts */
+  useKeyboardShortcuts();
 
   return (
     <div style={styles.container}>
@@ -25,7 +38,7 @@ export default function AppLayout() {
           {sceneExpanded && <SceneTree />}
           <ToolPanel
             activeTool={selectedTool}
-            onSelectTool={setSelectedTool}
+            onSelectTool={handleToolSelect}
           />
         </aside>
 
@@ -42,6 +55,42 @@ export default function AppLayout() {
     </div>
   );
 }
+
+/* ───────────────────────────────────────────────────
+   Keyboard shortcuts
+   ─────────────────────────────────────────────────── */
+
+function useKeyboardShortcuts() {
+  const { undo, redo, setWireframe, setShowGrid } = useMeshStore();
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      if (ctrl && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if (ctrl && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      } else if (ctrl && e.key === "s") {
+        e.preventDefault();
+        /* Save action — would dispatch to global bus */
+      } else if (e.key === "w" && !ctrl) {
+        e.preventDefault();
+        setWireframe(!useMeshStore.getState().wireframe);
+      } else if (e.key === "g" && !ctrl) {
+        e.preventDefault();
+        setShowGrid(!useMeshStore.getState().showGrid);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo, setWireframe, setShowGrid]);
+}
+
+import { useEffect } from "react";
 
 const styles: Record<string, React.CSSProperties> = {
   container: {

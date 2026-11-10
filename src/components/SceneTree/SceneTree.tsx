@@ -1,39 +1,125 @@
-import { useState } from "react";
+/** Interactive SceneTree.
 
-const nodes = [
-  { id: "2", name: "Camera", type: "camera" },
-  { id: "3", name: "Light", type: "light" },
-];
+Shows the actual scene hierarchy from the Zustand store.  Clicking a
+node selects the corresponding mesh in the viewport and highlights the
+selected entry in the tree.
+*/
+import { useMeshStore } from "../../hooks/useMeshStore";
+
+function NodeIcon({ type }: { type: string }) {
+  const colorMap: Record<string, string> = {
+    camera: "var(--accent-green)",
+    light: "#ffcc00",
+    mesh: "var(--accent-blue)",
+  };
+  return (
+    <span
+      style={{
+        ...styles.nodeIcon,
+        color: colorMap[type] ?? "var(--text-muted)",
+      }}
+    >
+      {type === "mesh" ? "◆" : type === "camera" ? "◎" : "✦"}
+    </span>
+  );
+}
+
+function SceneNodeItem({ id, name, type }: { id: string; name: string; type: string }) {
+  const { selectedMeshId, selectMesh, setSelectedSceneId, selectedSceneId } =
+    useMeshStore();
+
+  const isSelected = selectedMeshId === id || selectedSceneId === id;
+
+  return (
+    <div
+      style={{
+        ...styles.node,
+        ...(isSelected ? styles.nodeSelected : {}),
+      }}
+      onClick={() => {
+        selectMesh(id);
+        setSelectedSceneId(id);
+      }}
+    >
+      <NodeIcon type={type} />
+      <span style={styles.nodeName}>{name}</span>
+    </div>
+  );
+}
 
 export default function SceneTree() {
-  const [selectedId, setSelectedId] = useState<string>("1");
+  const { meshes, selectedMeshId, selectMesh, setSelectedSceneId, showGrid, setShowGrid, wireframe, setWireframe } =
+    useMeshStore();
+  const [expanded, setExpanded] = useState(true);
+
+  const meshEntries = Array.from(meshes.values());
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
         <span style={styles.headerText}>Scene</span>
-        <button style={styles.toggleBtn}>▲</button>
+        <button
+          style={styles.toggleBtn}
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? "▲" : "▼"}
+        </button>
       </div>
-      <div style={styles.tree}>
-        {nodes.map((node) => (
-          <div
-            key={node.id}
-            style={{
-              ...styles.node,
-              ...(selectedId === node.id ? styles.nodeSelected : {}),
-            }}
-            onClick={() => setSelectedId(node.id)}
-          >
-            <span style={styles.nodeIcon}>
-              {node.type === "mesh" ? "◆" : node.type === "camera" ? "◎" : "✦"}
-            </span>
-            <span style={styles.nodeName}>{node.name}</span>
+
+      {/* Display toggles */}
+      <div style={styles.toggles}>
+        <label style={styles.toggleLabel}>
+          <input
+            type="checkbox"
+            checked={showGrid}
+            onChange={(e) => setShowGrid(e.target.checked)}
+          />
+          <span>Grid</span>
+        </label>
+        <label style={styles.toggleLabel}>
+          <input
+            type="checkbox"
+            checked={wireframe}
+            onChange={(e) => setWireframe(e.target.checked)}
+          />
+          <span>Wireframe</span>
+        </label>
+      </div>
+
+      {expanded && (
+        <div style={styles.tree}>
+          {/* Camera entry (non-selectable) */}
+          <div style={styles.node} onClick={() => {
+            /* Reset camera to default view */
+            const { gl } = (document.querySelector("canvas") as HTMLCanvasElement)?.getContext("webgl2") ||
+                           (document.querySelector("canvas") as HTMLCanvasElement)?.getContext("webgl");
+          }}>
+            <NodeIcon type="camera" />
+            <span style={styles.nodeName}>Camera</span>
           </div>
-        ))}
-      </div>
+
+          {/* Lights entry */}
+          <div style={styles.node}>
+            <NodeIcon type="light" />
+            <span style={styles.nodeName}>Light</span>
+          </div>
+
+          {/* Mesh entries */}
+          {meshEntries.map((mesh) => (
+            <SceneNodeItem
+              key={mesh.id}
+              id={mesh.id}
+              name={mesh.name}
+              type="mesh"
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
+import { useState } from "react";
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
@@ -59,6 +145,20 @@ const styles: Record<string, React.CSSProperties> = {
     color: "var(--text-muted)",
     padding: "0 4px",
   },
+  toggles: {
+    display: "flex",
+    gap: 8,
+    padding: "6px 8px",
+    borderBottom: "1px solid var(--border-color)",
+  },
+  toggleLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    fontSize: 10,
+    color: "var(--text-secondary)",
+    cursor: "pointer",
+  },
   tree: {
     padding: 4,
     display: "flex",
@@ -81,7 +181,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   nodeIcon: {
     fontSize: 10,
-    color: "var(--text-muted)",
     width: 14,
     textAlign: "center",
   },
