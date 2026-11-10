@@ -15,7 +15,7 @@ import { useRef, useState, useMemo } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, TransformControls, GridHelper, AxesHelper } from "@react-three/drei";
 import * as THREE from "three";
-import { useMeshStore } from "../hooks/useMeshStore";
+import { useMeshStore } from "../../hooks/useMeshStore";
 
 /* ───────────────────────────────────────────────────
    DCL-themed material for the default cube
